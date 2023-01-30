@@ -51,6 +51,10 @@ static const char *TAG = "module";
 #include "ovms_mutex.h"
 #include "ovms_notify.h"
 #include "string_writer.h"
+#include "esp_idf_version.h"
+#if ESP_IDF_VERSION_MAJOR >= 5
+  #include <esp_flash.h>
+#endif
 
 #define MAX_TASKS 30
 #define DUMPSIZE 1000
@@ -1083,7 +1087,11 @@ static void module_perform_factoryreset(OvmsWriter* writer)
     writer->printf("Erasing %" PRId32 " bytes of flash...\n",p->size);
   else
     ESP_LOGI(TAG, "Erasing %" PRId32 " bytes of flash...", p->size);
+#if ESP_IDF_VERSION_MAJOR >= 5
+  //esp_flash_erase_region(NULL, p->address, p->size);
+#else
   spi_flash_erase_range(p->address, p->size);
+#endif
 
   if (writer)
     writer->puts("Factory reset of configuration store complete and reboot now...");
