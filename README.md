@@ -1,19 +1,97 @@
 > **Warning**  
 > This branch is a Work-In-Progress to add compatibility with ESP-IDF v4.x and v5.x.  
 > Not suitable for production use - only for dev / tests.  
-> As of now, it (kind-of) works on ESP-IDF v4.4.3 with the following caveats:
-> * Crash detection / handler as been removed
-> * A small patch is needed for ESP-IDF v4.x to compile components as `whole-archive` when using `cmake` build system / `idf.py` (not needed for v5.x nor for Makefiles)
-> * Not all the vehicle components are included - in fact most of them aren't
-> * Another "WIP WIP WIP" patch needs to be addressed
+> As of now, it (kind-of) works on ESP-IDF v5.0 with the following caveats:
+> * the crash handler (`xt_set_error_handler_callback` and `esp_task_wdt_get_trigger_tasknames`) is disabled for the moment, we need to decide whether we "fork" ESP-IDF again to port it ; or if the new APIs are enough to (partially ?) reimplement it (see commit: "**WIP WIP WIP : comment out ESP-IDF specifics of our fork**")
+> * There is a crash in `OvmsConsole::Poll` which is not analysed (yet) and which is worked around by declaring a variable static (see commit: "**WIP WIP WIP : prevent a crash at boot (to be analysed)**")
+> * Our (previously) local copies of `wolfssh` and `wolfssl` are now in submodules (and moved one level below in terms of directories) - mainly to be able to have a CMakeLists.txt different from the upstream one. In the process, one of our previous patches is now lost : https://github.com/openvehicles/Open-Vehicle-Monitoring-System-3/commit/51444539047daef7bd2accb23ef40d1bc14fdb20 and we need to decide how to handle this.
+> * A lot of dependencies are now explicitly (hard-)coded in the CMakeLists.txt - which may, or may not be a good thing. Let's discuss it.
+> * The set of defines (in ovms_webserver) have been transformed into a header generation because it was not known how to implement those in a satisfying manner in cmake.
+> * Factory reset is absent (`esp_flash_erase_region` needs some work)
+> * There are still some warnings during compilation (mainly ADC which needs conversion + some others)
+> * Mongoose is not (yet) ready to compile with TLS enabled.
+> * wolfSSL can't be (yet) compiled with OPENSSL defines (see wolfSSL/wolfssl#6028)
+> * wolfSSL has been updated to tag `v5.5.4-stable`, and needs a small patch to compile (see wolfSSL/wolfssl#6024, wolfSSL/wolfssl#6026, wolfSSL/wolfssl#6029) (see below for the patch)
+> * wolfSSH has been updated to tag `v1.4.6-stable`
+> * mongoose has not been updated but needs patching (see below for the patch)
+> * Some commits (identified by "WIP WIP WIP") needs to be addressed
 > * No real-world test has been done
-> * All compiler warnings are currently disabled (to re-enable, remove/edit/comment `idf_build_set_property` line from `vehicle/OVMS.V3/CMakeLists.txt`)
-> * I want to stay compatible with our 3.3.6 branch, and tried as much as I could to keep that compatibility. In case something is broken, please report and we will fix it.
-> * I'm mainly testing using `cmake` build system / `idf.py`, not Makefiles (which have disappeared in v5.x)
+> * We wanted to stay compatible with our 3.3.6 branch, and tried as much as we could to keep that compatibility. In case something is broken, please report and we will fix it.
+> * This branch has mainly been tested using `cmake` build system / `idf.py`, not Makefiles (which have disappeared in v5.x)
 
-Instructions for ESP-IDF v4.4.3:
-* Setup ESP-IDF where you want and ensure it works, [following the instructions here](https://docs.espressif.com/projects/esp-idf/en/release-v4.4/esp32/get-started/index.html).
-* In the (git) tree, apply [the following patch](https://github.com/espressif/esp-idf/commit/273633ee310fbc18b17edfaeae3f3121508e3b8d) : `git cherry-pick 273633ee310fbc18b17edfaeae3f3121508e3b8d` (Allows WHOLE_ARCHIVE support in cmake components).
+### Patch for wolfSSL
+```patch
+diff --git a/wolfcrypt/src/port/Espressif/esp32_sha.c b/wolfcrypt/src/port/Espressif/esp32_sha.c
+index 557bde8a9..0706fa7b1 100644
+--- a/wolfcrypt/src/port/Espressif/esp32_sha.c
++++ b/wolfcrypt/src/port/Espressif/esp32_sha.c
+@@ -507,8 +507,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
+ 
+     #if defined(WOLFSSL_SHA384)
+         case SHA2_384:
+-            SHA_LOAD_REG = SHA_384_LOAD_REG;
+-            SHA_BUSY_REG = SHA_384_BUSY_REG;
++            DPORT_REG_WRITE(SHA_384_LOAD_REG, 1);
+             break;
+     #endif
+ 
+@@ -551,7 +550,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
+      *    DPORT_SEQUENCE_REG_READ(address + i * 4);
+      */
+     esp_dport_access_read_buffer(
+-        (word32*)(hash), /* the result will be found in hash upon exit     */
++        (uint32_t*)(hash), /* the result will be found in hash upon exit     */
+         SHA_TEXT_BASE,   /* there's a fixed reg addy for all SHA           */
+         wc_esp_sha_digest_size(ctx->sha_type) / sizeof(word32) /* # 4-byte */
+     );
+diff --git a/wolfcrypt/src/sha512.c b/wolfcrypt/src/sha512.c
+index d42806976..deb60222d 100644
+--- a/wolfcrypt/src/sha512.c
++++ b/wolfcrypt/src/sha512.c
+@@ -1306,7 +1306,7 @@ static int InitSha384(wc_Sha384* sha384)
+     sha384->ctx.isfirstblock = 1;
+     if(sha384->ctx.mode == ESP32_SHA_HW) {
+         /* release hw */
+-        esp_sha_hw_unlock(&(sha512->ctx));
++        esp_sha_hw_unlock(&(sha384->ctx));
+     }
+     /* always set mode as INIT
+     *  whether using HW or SW is determined at first call of update()
+
+```
+
+### Patch for mongoose
+```patch
+diff --git a/mongoose.c b/mongoose.c
+index b12cff18..60a7f62e 100644
+--- a/mongoose.c
++++ b/mongoose.c
+@@ -9160,7 +9160,7 @@ static void mg_send_file_data(struct mg_connection *nc, FILE *fp) {
+ static void mg_do_ssi_include(struct mg_connection *nc, struct http_message *hm,
+                               const char *ssi, char *tag, int include_level,
+                               const struct mg_serve_http_opts *opts) {
+-  char file_name[MG_MAX_PATH], path[MG_MAX_PATH], *p;
++  char file_name[MG_MAX_PATH], path[MG_MAX_PATH+2], *p;
+   FILE *fp;
+ 
+   /*
+diff --git a/mongoose.h b/mongoose.h
+index 3bcf8147..5649e1a7 100644
+--- a/mongoose.h
++++ b/mongoose.h
+@@ -1768,7 +1768,7 @@ typedef struct {
+ 
+ void cs_md5_init(cs_md5_ctx *c);
+ void cs_md5_update(cs_md5_ctx *c, const unsigned char *data, size_t len);
+-void cs_md5_final(unsigned char *md, cs_md5_ctx *c);
++void cs_md5_final(unsigned char md[16], cs_md5_ctx *c);
+ 
+ #ifdef __cplusplus
+ }
+```
+
+Instructions for ESP-IDF v5.0:
+* Setup ESP-IDF where you want and ensure it works, [following the instructions here](https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32/get-started/index.html).
 * Build as usual (`idf.py build`, etc...)
 
 ---
