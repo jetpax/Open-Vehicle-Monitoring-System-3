@@ -1,0 +1,80 @@
+---
+# This is an ESP-IDF workflow to build OVMS v3
+
+name: 'Build and store artifacts for OVMS v3'
+
+# Controls when the action will run.
+on:
+  # # Triggers the workflow on tag create like v1.0, v2.0.0 and so on
+  # push:
+  #   tags:
+  #    - 'v*'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called 'build'
+  build:
+
+    strategy:
+      matrix:
+        include:
+          - esp_idf_version: "v5.0.1"
+            build_command: "idf.py build"
+            sdkconfig: "sdkconfig.defaults.esp5.0.1"
+            idf_component_file: "idf_component.yml.esp5"
+            patch_mongoose: true
+          - esp_idf_version: "v5.0"
+            build_command: "idf.py build"
+            sdkconfig: "sdkconfig.defaults.esp5"
+            idf_component_file: "idf_component.yml.esp5"
+            patch_mongoose: true
+          # - esp_idf_version: "v4.4.4"
+          #   build_command: "idf.py build"
+          #   sdkconfig: "sdkconfig.defaults.esp4"
+          #   idf_component_file: "idf_component.yml.esp4"
+          #   patch_mongoose: false
+          # - esp_idf_version: "v3.3.6"
+          #   build_command: "make -j all"
+          #   patch_mongoose: false
+
+    # The type of runner that the job will run on
+    runs-on: 'ubuntu-latest'
+    steps:
+
+      - name: 'Checkout repo'
+        uses: 'actions/checkout@v3'
+        with:
+          submodules: 'recursive'
+
+      - name: 'Patch mongoose (ESP-IDF v5+)'
+        if: matrix.patch_mongoose
+        run: 'git apply --directory="vehicle/OVMS.V3/components/mongoose/mongoose" "vehicle/OVMS.V3/support/mongoose-espv5.patch"'
+
+      - name: 'Setup IDF component file'
+        run: 'cp "vehicle/OVMS.V3/support/${{ matrix.idf_component_file }}" "vehicle/OVMS.V3/main/idf_component.yml"'
+
+      - name: 'Setup configuration'
+        run: 'cp "vehicle/OVMS.V3/support/${{ matrix.sdkconfig }}" "vehicle/OVMS.V3/sdkconfig.defaults"'
+
+      - name: 'Install ESP-IDF and Build project'
+        uses: 'espressif/esp-idf-ci-action@v1'
+        with:
+            esp_idf_version: "${{ matrix.esp_idf_version }}"
+            command: "apt-get update && apt-get install -y dos2unix && CMAKE_COLOR_DIAGNOSTICS=ON ${{ matrix.build_command }}"
+            target: 'esp32'
+            path: 'vehicle/OVMS.V3'
+
+      - name: 'Archive build output artifacts'
+        uses: 'actions/upload-artifact@v3'
+        with:
+          name: 'build-esp-idf-${{ matrix.esp_idf_version }}'
+          path: |
+            vehicle/OVMS.V3/build/bootloader/bootloader.bin
+            vehicle/OVMS.V3/build/partition_table/partition-table.bin
+            vehicle/OVMS.V3/build/ovms3.bin
+            vehicle/OVMS.V3/build/ovms3.elf
+            vehicle/OVMS.V3/build/log/*
+            vehicle/OVMS.V3/sdkconfig
