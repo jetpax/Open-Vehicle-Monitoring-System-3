@@ -178,6 +178,7 @@ Peripherals::Peripherals()
     .intr_type = GPIO_INTR_DISABLE
     };
   gpio_config( &gpio_conf );
+
   gpio_conf =
     {
     .pin_bit_mask = BIT(MODEM_GPIO_TX),
@@ -187,7 +188,35 @@ Peripherals::Peripherals()
     .intr_type = GPIO_INTR_DISABLE
     };
   gpio_config( &gpio_conf );
+
+#if defined CONFIG_OVMS_COMP_MAX7317 && !defined CONFIG_OVMS_HW_T_SIM7600
   m_cellular_modem = new modem("cellular", UART_NUM_1, 115200, MODEM_GPIO_RX, MODEM_GPIO_TX, MODEM_EGPIO_PWR, MODEM_EGPIO_DTR);
+
+#else //ifdef CONFIG_OVMS_COMP_MAX7317
+  gpio_conf =
+    {
+    .pin_bit_mask = BIT64(MODEM_GPIO_PWR),
+    .mode = GPIO_MODE_OUTPUT ,
+    .pull_up_en = GPIO_PULLUP_ENABLE,
+    .pull_down_en = GPIO_PULLDOWN_DISABLE,
+    .intr_type = GPIO_INTR_DISABLE
+    };
+  gpio_config( &gpio_conf );
+
+  gpio_conf =
+    {
+    .pin_bit_mask = BIT64(MODEM_GPIO_DTR),
+    .mode = GPIO_MODE_OUTPUT ,
+    .pull_up_en = GPIO_PULLUP_ENABLE,
+    .pull_down_en = GPIO_PULLDOWN_DISABLE,
+    .intr_type = GPIO_INTR_DISABLE
+    };
+  gpio_config( &gpio_conf );
+
+   m_cellular_modem = new modem("cellular", UART_NUM_1, 115200, MODEM_GPIO_RX, MODEM_GPIO_TX, MODEM_GPIO_PWR, MODEM_GPIO_DTR);
+
+#endif // #else // #ifdef CONFIG_OVMS_COMP_MAX7317
+
 #endif // #ifdef CONFIG_OVMS_COMP_CELLULAR
 
 #ifdef CONFIG_OVMS_COMP_OBD2ECU

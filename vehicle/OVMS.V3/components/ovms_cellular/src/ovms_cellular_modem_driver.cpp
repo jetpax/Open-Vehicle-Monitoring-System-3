@@ -90,9 +90,11 @@ void modemdriver::Restart()
 void modemdriver::PowerOff()
   {
   PowerSleep(false);
-#ifdef CONFIG_OVMS_COMP_MAX7317
+#if defined CONFIG_OVMS_COMP_MAX7317 && !defined CONFIG_OVMS_HW_T_SIM7600
   MyPeripherals->m_max7317->Output(MODEM_EGPIO_PWR, 0); // Modem EN/PWR line low
-#endif // #ifdef CONFIG_OVMS_COMP_MAX7317
+#else // #ifdef CONFIG_OVMS_COMP_MAX7317
+  gpio_set_level((gpio_num_t)MODEM_GPIO_PWR, 1);
+#endif  // #else // #ifdef CONFIG_OVMS_COMP_MAX7317
   }
 
 void modemdriver::PowerCycle()
@@ -103,24 +105,34 @@ void modemdriver::PowerCycle()
 
   uart_wait_tx_done(m_modem->m_uartnum, portMAX_DELAY);
   uart_flush(m_modem->m_uartnum); // Flush the ring buffer, to try to address MUX start issues
-#ifdef CONFIG_OVMS_COMP_MAX7317
+#if defined CONFIG_OVMS_COMP_MAX7317 && !defined CONFIG_OVMS_HW_T_SIM7600
   MyPeripherals->m_max7317->Output(MODEM_EGPIO_PWR, 0); // Modem EN/PWR line low
   MyPeripherals->m_max7317->Output(MODEM_EGPIO_PWR, 1); // Modem EN/PWR line high
   vTaskDelay(psd / portTICK_PERIOD_MS);
   MyPeripherals->m_max7317->Output(MODEM_EGPIO_PWR, 0); // Modem EN/PWR line low
-#endif // #ifdef CONFIG_OVMS_COMP_MAX7317
+#else // #ifdef CONFIG_OVMS_COMP_MAX7317
+  gpio_set_level((gpio_num_t)MODEM_GPIO_PWR, 1); // Modem EN/PWR line low
+  gpio_set_level((gpio_num_t)MODEM_GPIO_PWR, 0); // // Modem EN/PWR line high
+  vTaskDelay(psd / portTICK_PERIOD_MS);
+  gpio_set_level((gpio_num_t)MODEM_GPIO_PWR, 1); // Modem EN/PWR line low
+#endif  // #else // #ifdef CONFIG_OVMS_COMP_MAX7317
   }
 
 void modemdriver::PowerSleep(bool onoff)
   {
-  #ifdef CONFIG_OVMS_COMP_MAX7317
-    if (onoff)
-      MyPeripherals->m_max7317->Output(MODEM_EGPIO_DTR, 1);
-    else
-      MyPeripherals->m_max7317->Output(MODEM_EGPIO_DTR, 0);
-  #endif // #ifdef CONFIG_OVMS_COMP_MAX7317
+#if defined CONFIG_OVMS_COMP_MAX7317 && !defined CONFIG_OVMS_HW_T_SIM7600
+  if (onoff)
+    MyPeripherals->m_max7317->Output(MODEM_EGPIO_DTR, 1);
+  else
+    MyPeripherals->m_max7317->Output(MODEM_EGPIO_DTR, 0);
+#else // #ifdef CONFIG_OVMS_COMP_MAX7317
+  if (onoff)
+    gpio_set_level((gpio_num_t)MODEM_GPIO_DTR, 1); 
+  else
+    gpio_set_level((gpio_num_t)MODEM_GPIO_DTR, 0); 
+#endif  //#else // #ifdef CONFIG_OVMS_COMP_MAX7317
   }
-
+  
 int modemdriver::GetMuxChannels()    { return 4; }
 int modemdriver::GetMuxChannelCTRL() { return 0; }
 int modemdriver::GetMuxChannelNMEA() { return 1; }

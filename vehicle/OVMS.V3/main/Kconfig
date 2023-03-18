@@ -23,6 +23,8 @@ choice OVMS_HW_MODEL
         help
                 OVMS_HW_BASE_3_0                OVMS base (early developer) hardware v3.0
                 OVMS_HW_BASE_3_1                OVMS base production hardware v3.1
+                OVMS_HW_T_SIM7600               OVMS on LilyGO T-SIM7600
+                OVMS_HW_ESP32S3_MINI            OVMS on S3 DevKitM
 
 config OVMS_HW_BASE_3_0
     bool "OVMS base hardware v3.0"
@@ -34,12 +36,22 @@ config OVMS_HW_BASE_3_1
     help
         Select this: OVMS base production hardware v3.1
 
+config OVMS_HW_T_SIM7600
+    bool "OVMS on LilyGO T-SIM7600"
+    help
+        Select this: OVMS on LilyGO T-SIM7600
+
+config OVMS_HW_ESP32S3_MINI
+    bool "OVMS on S3 DevKitM"
+    help
+        Select this: OVMS on S3 DevKitM
+
 endchoice # OVMS_HW_MODEL
 
 config OVMS_HW_SPIMEM_AGGRESSIVE
     bool "Aggressively use SPI RAM (rather than internal RAM)"
     default y
-    depends on OVMS && OVMS_HW_BASE_3_1
+    depends on OVMS && ( OVMS_HW_BASE_3_1 || OVMS_HW_T_SIM7600 || OVMS_HW_ESP32S3_MINI)
     help
         Enable to aggressively allocate from SPI RAM (rather than internal RAM).
 

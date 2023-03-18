@@ -79,6 +79,124 @@
 #include "ext12v.h"
 #endif // #ifdef CONFIG_OVMS_COMP_EXT12V
 
+#ifdef CONFIG_OVMS_HW_ESP32S3_MINI
+
+#define MODULE_GPIO_SW2             0   // SW2: firmware download / factory reset
+
+#define ESP32CAN_PIN_TX             45  // on-board CAN0 Tx
+#define ESP32CAN_PIN_RX             46  // on-board CAN0 Rx 
+
+#define VSPI_PIN_MISO               13  // default ESP32-S3
+#define VSPI_PIN_MOSI               11  // default ESP32-S3
+#define VSPI_PIN_CLK                12  // default ESP32-S3
+
+#define VSPI_PIN_MCP2515_1_CS        7  // 
+#define VSPI_PIN_MCP2515_1_INT       8  // 
+
+#define VSPI_PIN_MCP2515_2_CS       10  // 
+#define VSPI_PIN_MCP2515_2_INT       9  // 
+
+#define VSPI_PIN_MAX7317_CS          6  // I/O expansion on VSPI 
+#define EXT12V_MON                  14  //   
+
+#define MODEM_GPIO_TX               18  //  _OUTPUT_ from modem
+#define MODEM_GPIO_RX               17  //  _INPUT_ to modem
+#define MODEM_GPIO_DTR              15  //  
+#define MODEM_GPIO_PWR              16  //  
+
+#define SDCARD_PIN_CLK              38  //  
+#define SDCARD_PIN_CMD              39  //  
+#define SDCARD_PIN_D0               40  //  
+#define SDCARD_PIN_CD               41  //  
+
+#ifdef CONFIG_OVMS_COMP_EXTERNAL_SWCAN
+#define MAX7317_SWCAN_MODE0         4   // EGPIO_3
+#define MAX7317_SWCAN_MODE1         5   // EGPIO_4
+
+// Not supported on T-SIM, insufficient pins
+// #define VSPI_PIN_MCP2515_SWCAN_CS   
+// #define VSPI_PIN_MCP2515_SWCAN_INT  
+
+#define MAX7317_SWCAN_STATUS_LED    7   // EGPIO_6
+#define MAX7317_SWCAN_TX_LED        8   // EGPIO_7
+#define MAX7317_SWCAN_RX_LED        9   // EGPIO_8
+
+#endif // #ifdef CONFIG_OVMS_COMP_EXTERNAL_SWCAN
+
+#define MAX7317_MDM_EN            0
+#define MAX7317_SW_CTL            1
+#define MAX7317_CAN1_EN           2
+#define MAX7317_MDM_DTR           3
+#define MAX7317_EGPIO_1           2
+#define MAX7317_EGPIO_2           3
+#define MAX7317_EGPIO_3           4
+#define MAX7317_EGPIO_4           5
+#define MAX7317_EGPIO_5           6
+#define MAX7317_EGPIO_6           7
+#define MAX7317_EGPIO_7           8
+#define MAX7317_EGPIO_8           9
+
+
+#elif CONFIG_OVMS_HW_T_SIM7600      //#ifdef CONFIG_OVMS_HW_ESP32S3_MINI
+
+#define MODULE_GPIO_SW2             0   // SW2: firmware download / factory reset
+
+#define ESP32CAN_PIN_TX             21  // on-board CAN0 Tx
+#define ESP32CAN_PIN_RX             22  // on-board CAN0 Rx nb pin is I/P ONLY!!!
+
+#define VSPI_PIN_MISO               19  //  defined by T-SIM7600 hw
+#define VSPI_PIN_MOSI               23  //  defined by T-SIM7600 hw
+#define VSPI_PIN_CLK                18  //  defined by T-SIM7600 hw
+
+// #define VSPI_PIN_MCP2515_1_CS       5   // Ext CAN1 on VSPI
+// #define VSPI_PIN_MCP2515_1_INT      39  // also SENSOR_VN, nb pin is I/P ONLY!!!
+
+// #define VSPI_PIN_MCP2515_2_CS       12  // Ext CAN2 on VSPI (also Blue LED)
+// #define VSPI_PIN_MCP2515_2_INT      35  // VBAT divider defined by T-SIM7600 hw nb pin is I/P ONLY!!!
+
+#define EXT12V_MON                  36  // also SENSOR_VP/SOLAR, nb pin is I/P ONLY!!!    
+
+#define MODEM_GPIO_RX               26  //  data _to_ modem, this is idefined by T-SIM7600 hw
+#define MODEM_GPIO_TX               27  //  data _from_ modem, defined by T-SIM7600 hw 
+#define MODEM_GPIO_DTR              32  //  defined by T-SIM7600 hw
+#define MODEM_GPIO_PWR              4   //  defined by T-SIM7600 hw
+
+#define SDCARD_PIN_CLK              14  //  defined by T-SIM7600 hw
+#define SDCARD_PIN_CMD              15  //  defined by T-SIM7600 hw
+#define SDCARD_PIN_D0               2   //  defined by T-SIM7600 hw
+#define SDCARD_PIN_CD               13  //  defined by T-SIM7600 hw
+
+// MAX7317 Not supported on T-SIM, insufficient pins
+#define VSPI_PIN_MAX7317_CS       5
+   
+#define MAX7317_MDM_EN            0
+#define MAX7317_SW_CTL            1
+#define MAX7317_CAN1_EN           2
+#define MAX7317_MDM_DTR           3
+#define MAX7317_EGPIO_1           2
+#define MAX7317_EGPIO_2           3
+#define MAX7317_EGPIO_3           4
+#define MAX7317_EGPIO_4           5
+#define MAX7317_EGPIO_5           6
+#define MAX7317_EGPIO_6           7
+#define MAX7317_EGPIO_7           8
+#define MAX7317_EGPIO_8           9
+
+// #ifdef CONFIG_OVMS_COMP_EXTERNAL_SWCAN
+// #define MAX7317_SWCAN_MODE0         4   // EGPIO_3
+// #define MAX7317_SWCAN_MODE1         5   // EGPIO_4
+// #define VSPI_PIN_MCP2515_SWCAN_CS   
+// #define VSPI_PIN_MCP2515_SWCAN_INT  
+// #define MAX7317_SWCAN_STATUS_LED    7   // EGPIO_6
+// #define MAX7317_SWCAN_TX_LED        8   // EGPIO_7
+// #define MAX7317_SWCAN_RX_LED        9   // EGPIO_8
+
+// #endif // #ifdef CONFIG_OVMS_COMP_EXTERNAL_SWCAN
+
+
+
+#else //#ifdef CONFIG_OVMS_HW_T_SIM7600
+
 #define MODULE_GPIO_SW2           0       // SW2: firmware download / factory reset
 
 #define VSPI_PIN_MISO             19
@@ -133,6 +251,8 @@
 
 #define MODEM_EGPIO_PWR           0
 #define MODEM_EGPIO_DTR           3
+
+#endif // #else //#ifdef CONFIG_OVMS_HW_T_SIM7600
 
 class Peripherals : public InternalRamAllocated
   {
