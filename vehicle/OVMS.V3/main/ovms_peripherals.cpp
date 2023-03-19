@@ -144,7 +144,7 @@ Peripherals::Peripherals()
 
 #ifdef CONFIG_OVMS_COMP_ADC
   ESP_LOGI(TAG, "  ESP32 ADC");
-  m_esp32adc = new esp32adc("adc", ADC1_CHANNEL_0, ADC_WIDTH_BIT_12, ADC_ATTEN_DB_11);
+  m_esp32adc = new esp32adc("adc", EXT12V_MON, ADC_WIDTH_BIT_12, ADC_ATTEN_DB_11);
 
 #endif // #ifdef CONFIG_OVMS_COMP_ADC
 

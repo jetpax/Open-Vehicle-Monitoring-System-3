@@ -97,7 +97,7 @@
 #define VSPI_PIN_MCP2515_2_INT       9  // 
 
 #define VSPI_PIN_MAX7317_CS          6  // I/O expansion on VSPI 
-#define EXT12V_MON                  14  //   
+#define EXT12V_MON                  ADC1_CHANNEL_0 // corresponds to GPIO1 on ESP32S3 
 
 #define MODEM_GPIO_TX               18  //  _OUTPUT_ from modem
 #define MODEM_GPIO_RX               17  //  _INPUT_ to modem
@@ -141,8 +141,8 @@
 
 #define MODULE_GPIO_SW2             0   // SW2: firmware download / factory reset
 
-#define ESP32CAN_PIN_TX             21  // on-board CAN0 Tx
-#define ESP32CAN_PIN_RX             22  // on-board CAN0 Rx nb pin is I/P ONLY!!!
+#define ESP32CAN_PIN_TX             22  // on-board CAN0 Tx
+#define ESP32CAN_PIN_RX             21  // on-board CAN0 Rx nb pin is I/P ONLY!!!
 
 #define VSPI_PIN_MISO               19  //  defined by T-SIM7600 hw
 #define VSPI_PIN_MOSI               23  //  defined by T-SIM7600 hw
@@ -152,11 +152,13 @@
 // #define VSPI_PIN_MCP2515_1_INT      39  // also SENSOR_VN, nb pin is I/P ONLY!!!
 
 // #define VSPI_PIN_MCP2515_2_CS       12  // Ext CAN2 on VSPI (also Blue LED)
-// #define VSPI_PIN_MCP2515_2_INT      35  // VBAT divider defined by T-SIM7600 hw nb pin is I/P ONLY!!!
+// #define VSPI_PIN_MCP2515_2_INT      36  // also SENSOR_VP/SOLAR, nb pin is I/P ONLY!!!   
 
-#define EXT12V_MON                  36  // also SENSOR_VP/SOLAR, nb pin is I/P ONLY!!!    
 
-#define MODEM_GPIO_RX               26  //  data _to_ modem, this is idefined by T-SIM7600 hw
+#define EXT12V_MON                  ADC1_CHANNEL_0 // GPIO36 == SENSOR_VP/SOLAR, defined by T-SIM7600 hw
+                                    // ADC1_CHANNEL_7  // GPIO35 == VBAT divider, defined by T-SIM7600 hw
+
+#define MODEM_GPIO_RX               26  //  data _to_ modem, defined by T-SIM7600 hw
 #define MODEM_GPIO_TX               27  //  data _from_ modem, defined by T-SIM7600 hw 
 #define MODEM_GPIO_DTR              32  //  defined by T-SIM7600 hw
 #define MODEM_GPIO_PWR              4   //  defined by T-SIM7600 hw
@@ -192,8 +194,6 @@
 // #define MAX7317_SWCAN_RX_LED        9   // EGPIO_8
 
 // #endif // #ifdef CONFIG_OVMS_COMP_EXTERNAL_SWCAN
-
-
 
 #else //#ifdef CONFIG_OVMS_HW_T_SIM7600
 

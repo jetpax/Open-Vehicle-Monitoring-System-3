@@ -54,6 +54,7 @@ static const char *TAG = "boot";
 #include "metrics_standard.h"
 #include "string_writer.h"
 #include <string.h>
+#include "ovms_peripherals.h"
 
 boot_data_t __attribute__((section(".rtc.noload"))) boot_data;
 
@@ -260,10 +261,10 @@ Boot::Boot()
       // Note: RTC_MODULE nags about a lock release before aquire, this can be ignored
       //  (reason: RTC_MODULE needs FreeRTOS for locking, which hasn't been started yet)
       adc1_config_width(ADC_WIDTH_BIT_12);
-      adc1_config_channel_atten(ADC1_CHANNEL_0, ADC_ATTEN_DB_11);
+      adc1_config_channel_atten(EXT12V_MON, ADC_ATTEN_DB_11);
       uint32_t adc_level = 0;
       for (int i = 0; i < 5; i++)
-        adc_level += adc1_get_raw(ADC1_CHANNEL_0);
+        adc_level += adc1_get_raw(EXT12V_MON);
       float level_12v = (float) adc_level / 5 / 195.7;
       ESP_LOGI(TAG, "12V level: ~%.1fV", level_12v);
       if (level_12v > 11.0)
