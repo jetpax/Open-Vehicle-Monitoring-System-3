@@ -252,6 +252,8 @@
 #define MODEM_EGPIO_PWR           0
 #define MODEM_EGPIO_DTR           3
 
+#define EXT12V_MON                  ADC1_CHANNEL_0 // GPIO36 == SENSOR_VP
+
 #endif // #else //#ifdef CONFIG_OVMS_HW_T_SIM7600
 
 class Peripherals : public InternalRamAllocated
