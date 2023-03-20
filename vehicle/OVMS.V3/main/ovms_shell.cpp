@@ -31,7 +31,7 @@
 #include <string.h>
 #include "ovms_shell.h"
 
-static const char* secure_prompt = "OVMS# ";
+static const char* secure_prompt = "RetroVMS# ";
 
 void Print(microrl_t* rl, const char * str)
   {
